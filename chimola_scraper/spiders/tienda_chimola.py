@@ -24,6 +24,7 @@ class TiendaChimolaSpider(scrapy.spiders.SitemapSpider):
         product_form_loader.add_css('price', '#price_display::attr(content)')
         product_form_loader.add_css(
             'availability', 'meta[itemprop=availability]::attr(content)')
+        # loader.add_value('availability', 'In stock')
         product_loader.add_css(
             'description', 'div.user-content > p:first-of-type::text')
         loader.add_value('url', response.url)

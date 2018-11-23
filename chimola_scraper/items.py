@@ -20,6 +20,10 @@ class ChimolaScraperItem(scrapy.Item):
     category_path = scrapy.Field(type='list', default=list)
 
 
+def strip_linebreaks(self, value):
+    return value.rstrip('\r\n')
+
+
 class ChimolaScraperItemLoader(scrapy.loader.ItemLoader):
     default_output_processor = TakeFirst()
     image_urls_out = Identity()

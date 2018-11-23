@@ -5,6 +5,7 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 from google.cloud import pubsub
+from google.oauth2 import service_account
 
 
 class ChimolaScraperPipeline(object):
@@ -23,8 +24,9 @@ class ChimolaScraperPipeline(object):
         )
 
     def open_spider(self, spider):
-        self.publish_client = pubsub.PublisherClient \
-            .from_service_account_json(self.credentials_file_path)
+        credentials = service_account.Credentials \
+            .from_service_account_file(self.credentials_file_path)
+        self.publish_client = pubsub.PublisherClient(credentials=credentials)
         self.publish_resource = self.publish_client.topic_path(
             self.publish_project, self.publish_topic
         )
@@ -34,9 +36,10 @@ class ChimolaScraperPipeline(object):
             message_id = future.result()
             print("Message published: {}".format(message_id))
 
+        message = str(dict(item))
         future = self.publish_client.publish(
             self.publish_resource,
-            str(dict(item)).encode('utf-8')
+            message.encode('utf-8')
         )
         future.add_done_callback(callback)
         return item
