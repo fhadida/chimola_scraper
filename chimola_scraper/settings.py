@@ -69,7 +69,7 @@ ITEM_PIPELINES = {
     'chimola_scraper.pipelines.ChimolaScraperPipeline': 300,
 }
 
-GCLOUD_CREDENTIALS_FILE_PATH = './chimola_scraper/Chimola-a45eb1362770.json'
+GCLOUD_CREDENTIALS_FILE_PATH = './keys/Chimola-a45eb1362770.json'
 PUBLISH_PROJECT = 'chimola-213915'
 PUBLISH_TOPIC = 'product_feed'
 
