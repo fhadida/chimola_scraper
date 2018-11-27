@@ -140,9 +140,9 @@ class ProductFeed:
         def to_row(self):
             return [
                 self.id, self.title, self.description, self.link,
-                self.price.value + ' ' + self.price.currency, self.availability,
-                self.imageLink, self.brand, self.gtin, self.identifierExists,
-                self.productType
+                self.price.value + ' ' + self.price.currency,
+                self.availability, self.imageLink, self.brand, self.gtin,
+                self.identifierExists, self.productType
             ]
 
         class Price:

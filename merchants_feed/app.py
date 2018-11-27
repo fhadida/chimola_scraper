@@ -1,24 +1,36 @@
 from google.cloud import pubsub
+from google.oauth2 import service_account
 from message_reader import ChimolaProductMessageReader, ChimolaProductMapper
 from product_feed import ProductFeed
 from chimola_ftp import ChimolaFTP
 from concurrent.futures import ThreadPoolExecutor
 import time
+import settings
+
 # from merchants_center import MerchantsCenterClient
 
-# Do not forget to set GOOGLE_APPLICATION_CREDENTIALS=C:\Users\Fede\Documents\GCP Keys\Chimola-a45eb1362770.json
+# Do not forget to set:
+#   GOOGLE_APPLICATION_CREDENTIALS=
+#           C:\Users\Fede\Documents\GCP Keys\Chimola-a45eb1362770.json
 
-SUB_NAME = 'projects/chimola-213915/subscriptions/merchant_center'
+# SUB_NAME = 'projects/chimola-213915/subscriptions/merchant_center'
 # merchantsCenterClient = MerchantsCenterClient('123298316')
 feed = ProductFeed()
+ack_ids = []
 
 
 def callback(message):
     product = ChimolaProductMessageReader.read(message)
-    itemfeed = ChimolaProductMapper.map(product)
-    # merchantsCenterClient.send(feed)
-    feed.add_item(itemfeed)
-    message.ack()
+    if product is None:
+        # discard message
+        message.ack()
+        print(
+            "message with Id {} has been discarded".format(message.message_id))
+    else:
+        itemfeed = ChimolaProductMapper.map(product)
+        # merchantsCenterClient.send(feed)
+        feed.add_item(itemfeed)
+        ack_ids.append(message.message_id)
 
 
 def read_message(message):
@@ -49,11 +61,23 @@ def upload_feed(ftp):
 
 
 def main():
-    subscriber = pubsub.SubscriberClient()
+    credentials = service_account.Credentials\
+        .from_service_account_file(settings.GCLOUD_CREDENTIALS_FILE_PATH)
+    subscriber = pubsub.SubscriberClient(credentials=credentials)
     print("subscriber created!")
-    subs_future = subscriber.subscribe(SUB_NAME, callback)
-    print("subscriber subcribed to {}!".format(SUB_NAME))
-    ftp = ChimolaFTP('ftp.c0310255.ferozo.com', 'c0310255', 'biDIri20fo')
+    sub_path = subscriber.subscription_path(
+        settings.PUB_SUB.get('project_id'),
+        settings.PUB_SUB.get('sub_name')
+    )
+    subs_future = subscriber.subscribe(sub_path, callback)
+    print(
+        "subscriber subcribed to {}!".format(settings.PUB_SUB.get('sub_name')))
+    # ftp = ChimolaFTP('ftp.c0310255.ferozo.com', 'c0310255', 'biDIri20fo')
+    ftp = ChimolaFTP(
+        settings.FTP.get('hostname'),
+        settings.FTP.get('username'),
+        settings.FTP.get('password')
+    )
     upload_future = ThreadPoolExecutor(max_workers=1).submit(upload_feed, ftp)
     print("executor created and submited!")
     try:
@@ -61,6 +85,10 @@ def main():
         subs_future.result()
         print("wating for upload feed...")
         upload_future.result()
+        print("messages to ack: {}".format(len(ack_ids)))
+        subscriber.acknowldege(sub_path, ack_ids)
+        print("acked message Ids: {}".format(ack_ids))
+        ack_ids.clear()
     except (KeyboardInterrupt, Exception) as ex:
         subs_future.cancel()
         upload_future.cancel()

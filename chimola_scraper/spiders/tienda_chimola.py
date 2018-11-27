@@ -20,7 +20,7 @@ class TiendaChimolaSpider(scrapy.spiders.SitemapSpider):
             '#single-product #product_form')
         product_form_loader.add_css(
             'id', 'input[name=add_to_cart]::attr(value)')
-        product_loader.add_css('title', 'h1.product_name::text')
+        product_loader.add_css('title', 'h1.product-name::text')
         product_form_loader.add_css('price', '#price_display::attr(content)')
         product_form_loader.add_css(
             'availability', 'meta[itemprop=availability]::attr(content)')

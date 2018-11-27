@@ -9,9 +9,33 @@ class ChimolaProductMessageReader:
         product_str = message.data.decode('utf-8')
         print('Message content: {}'.format(product_str))
         product = ast.literal_eval(product_str)
-        print('Product Id: {}'.format(product['id']))
-        print('Porduct title: {}'.format(product['title']))
-        return product
+        if ChimolaProductMessageReader.is_valid(product):
+            print('Product Id: {}'.format(product['id']))
+            print('Porduct title: {}'.format(product['title']))
+            return product
+        else:
+            return None
+
+    @staticmethod
+    def is_valid(product):
+        if 'id' not in product:
+            return False
+        if 'title' not in product:
+            return False
+        # if 'description' not in product:
+        #    return False
+        if 'url' not in product:
+            return False
+        if 'price' not in product:
+            return False
+        if 'availability' not in product:
+            return False
+        if 'image_urls' not in product:
+            return False
+        if 'category_path' not in product:
+            return False
+
+        return True
 
 
 class ChimolaProductMapper:
@@ -26,7 +50,7 @@ class ChimolaProductMapper:
         item_feed.availability = product.get('availability')
         imageUrls = product.get('image_urls', [])
         if len(imageUrls) > 0:
-            item_feed.imageLink = imageUrls[0]
+            item_feed.imageLink = 'https:' + imageUrls[0]
         item_feed.brand = 'Chimola'
         item_feed.identifierExists = 'no'
         item_feed.productType = ' > '.join(product.get('category_path', []))
