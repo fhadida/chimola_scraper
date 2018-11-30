@@ -1,7 +1,7 @@
 from google.cloud import pubsub
 from google.oauth2 import service_account
 from message_reader import ChimolaProductMessageReader, ChimolaProductMapper
-from product_feed import ProductFeed
+from product_feed import ProductFeed, CsvFeed
 from chimola_ftp import ChimolaFTP
 from concurrent.futures import ThreadPoolExecutor
 import time
@@ -30,7 +30,7 @@ def callback(message):
         itemfeed = ChimolaProductMapper.map(product)
         # merchantsCenterClient.send(feed)
         feed.add_item(itemfeed)
-        ack_ids.append(message.message_id)
+        message.ack()
 
 
 def read_message(message):
@@ -49,7 +49,7 @@ def upload_feed(ftp):
         if size_0 == size_f and size_f > 0:
             print("Calling the upload feed as TXT process...")
             try:
-                ftp.upload_asTXT("products_feed.txt", feed)
+                ftp.upload(settings.FEED_CSV_PATH)
                 print("Feed uploaded!")
                 feed.clear()
                 size_0 = feed.size()
@@ -61,6 +61,9 @@ def upload_feed(ftp):
 
 
 def main():
+    csv = CsvFeed(settings.FEED_CSV_PATH)
+    feed.subscribe(csv)
+    csv.writeline(feed.header())
     credentials = service_account.Credentials\
         .from_service_account_file(settings.GCLOUD_CREDENTIALS_FILE_PATH)
     subscriber = pubsub.SubscriberClient(credentials=credentials)

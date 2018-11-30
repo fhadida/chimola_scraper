@@ -14,3 +14,5 @@ FTP = {
     'username': '{SECRET_FTP_CHIMOLA_USERNAME}',
     'password': '{SECRET_FTP_CHIMOLA_PASSWORD}'
 }
+
+FEED_CSV_PATH = './products_feed.txt'

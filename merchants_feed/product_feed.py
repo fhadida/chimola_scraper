@@ -1,6 +1,25 @@
-class ProductFeed:
+import csv
+
+
+class Observable:
+    def __init__(self):
+        self._observers = []
+
+    def subscribe(self, observer):
+        self._observers.append(observer)
+
+    def unsubscribe(self, observer):
+        self._observers.remove(observer)
+
+    @property
+    def observers(self):
+        return self._observers
+
+
+class ProductFeed(Observable):
 
     def __init__(self):
+        super().__init__()
         self._items = []
 
     @property
@@ -11,6 +30,8 @@ class ProductFeed:
         if not isinstance(item, ProductFeed.Item):
             raise TypeError("Not a ProductFeed.Item")
         self._items.append(item)
+        for o in self.observers:
+            o.handle_itemadd(item)
 
     def size(self):
         return len(self._items)
@@ -165,3 +186,18 @@ class ProductFeed:
                         value = getattr(self, key)
                         if not callable(value):
                             yield key, value
+
+
+class CsvFeed:
+    def __init__(self, path):
+        self._filepath = path
+
+    def writeline(self, line):
+        with open(self._filepath, 'a') as csvfile:
+            csvwriter = csv.writer(csvfile, delimiter='\t')
+            print("Writting line: '{}'...".format(line))
+            csvwriter.writerow(line)
+            print("the line was written succesfully!")
+
+    def handle_itemadd(self, item):
+        self.writeline(item.to_row())

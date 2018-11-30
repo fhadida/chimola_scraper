@@ -40,6 +40,26 @@ class ChimolaFTP:
             out.close()
             print("Output succesfully closed!")
 
+    def upload(self, filepath):
+        self._ftp.connect(self._hostname)
+        print("login into {} as {} via FTP...".format(
+            self._hostname, self._username))
+        response = self._ftp.login(self._username, self._password)
+        print(response)
+        try:
+            print("changing directory to {}...".format(self._ftp.pwd()))
+            response = self._ftp.cwd("public_html")
+            print(response)
+            fileh = filepath.split('/')
+            filename = fileh[len(fileh)-1]
+            print("Uploading {}...".format(filename))
+            response = self._ftp.storlines(
+                "STOR " + filename, open(filepath, 'rb'))
+            print(response)
+        except Exception as ex:
+            print(ex)
+            raise
+
     @staticmethod
     def __writefeed(csv_out, feed):
         csvwriter = csv.writer(csv_out, delimiter='\t')
